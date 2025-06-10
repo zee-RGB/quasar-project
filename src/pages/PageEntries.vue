@@ -19,22 +19,37 @@
           </q-item-section>
         </q-item>
       </q-list>
-
-      <q-item>
-        <q-item-section class="text-weight-bold"> Balance: </q-item-section>
-        <q-item-section side class="text-weight-bold">
-          {{ useCurrencify(total) }}
-        </q-item-section>
-      </q-item>
     </div>
 
-    <q-footer>
-      <div class="row q-pa-sm row q-col-gutter-sm">
+    <q-footer class="bg-transparent">
+      <div class="row q-px-md q-py-sm shadow-up-3 q-mb-sm">
+        <div class="col text-weight-bold text-h6 text-grey-7">Balance:</div>
+
+        <div
+          class="col text-weight-bold text-h6 text-right"
+          :class="useAmountColor(balance)"
+        >
+          {{ useCurrencify(balance) }}
+        </div>
+      </div>
+
+      <q-form
+        @submit="addEntry"
+        class="row q-px-sm q-pb-sm row q-col-gutter-sm bg-primary"
+      >
         <div class="col">
-          <q-input outlined label="Name Input" bg-color="white" dense />
+          <q-input
+            v-model="newEntry.name"
+            ref="nameRef"
+            outlined
+            label="Name Input"
+            bg-color="white"
+            dense
+          />
         </div>
         <div class="col">
           <q-input
+            v-model.number="newEntry.amount"
             outlined
             label="Amount Input"
             bg-color="white"
@@ -45,18 +60,23 @@
         </div>
 
         <div class="col col-auto">
-          <q-btn round color="blue" dense icon="add" />
+          <q-btn round color="blue" dense icon="add" type="submit" />
         </div>
-      </div>
+      </q-form>
     </q-footer>
   </q-page>
 </template>
 
 <script setup>
+import { uid } from "quasar";
 import { useAmountColor } from "src/use/useAmountColor";
 import { useCurrencify } from "src/use/useCurrencify";
-import { ref } from "vue";
+import { computed, reactive, ref } from "vue";
 
+// refs
+const nameRef = ref(null);
+
+// reactive entries
 const entries = ref([
   {
     id: "1",
@@ -88,5 +108,40 @@ const entries = ref([
   },
 ]);
 
-const total = ref(entries.value.reduce((acc, entry) => acc + entry.amount, 0));
+// computed balance
+const balance = computed(() => {
+  return entries.value.reduce(
+    (accumulator, { amount }) => accumulator + amount,
+    0
+  );
+});
+
+// default entry form
+const defaultEntryForm = {
+  name: "",
+  amount: null,
+};
+
+// new entry
+const newEntry = reactive({
+  ...defaultEntryForm,
+});
+
+// reset new entry form
+const resetForm = () => {
+  Object.assign(newEntry, defaultEntryForm);
+  nameRef.value.focus();
+};
+
+// adds new entry
+const addEntry = () => {
+  if (!newEntry.name || newEntry.amount === null) {
+    return;
+  }
+
+  entries.value.push({ id: uid(), ...newEntry });
+
+  // reset form
+  resetForm();
+};
 </script>
